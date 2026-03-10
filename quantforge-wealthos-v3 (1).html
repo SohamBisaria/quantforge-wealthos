@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantForge WealthOS — Financial Health Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#080c14; --bg2:#0d1220; --bg3:#111827;
+    --card:#0f1623; --card2:#141d2e;
+    --border:rgba(99,132,255,0.12); --border2:rgba(99,132,255,0.22);
+    --gold:#d4a84b; --gold2:#f0c96a;
+    --blue:#4f7fff; --blue2:#7aa3ff;
+    --teal:#00d4b8; --teal2:#00f5d4;
+    --red:#ff4d6a; --green:#00e5a0; --purple:#9b7aff;
+    --text:#e8edf5; --text2:#8a9bbf; --text3:#4a5878;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,127,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,127,255,0.025) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;background:linear-gradient(180deg,#0a1020 0%,#080e18 100%);border-right:1px solid var(--border);z-index:100;display:flex;flex-direction:column;padding:26px 0;}
+  .logo{padding:0 22px 28px;border-bottom:1px solid var(--border);margin-bottom:22px;}
+  .logo-eyebrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+  .logo-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);}
+  .logo-mark{font-family:'Syne',sans-serif;font-size:9px;font-weight:600;letter-spacing:0.22em;color:var(--gold);text-transform:uppercase;}
+  .logo-name{font-family:'Syne',sans-serif;font-size:23px;font-weight:800;color:var(--text);letter-spacing:-0.02em;line-height:1;}
+  .logo-sub{font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-top:5px;line-height:1.4;}
+  .nav-section{padding:0 14px;flex:1;overflow-y:auto;}
+  .nav-label{font-size:9px;font-weight:500;letter-spacing:0.2em;color:var(--text3);text-transform:uppercase;padding:0 10px;margin-bottom:6px;margin-top:20px;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all 0.2s;margin-bottom:2px;font-size:12px;color:var(--text2);letter-spacing:0.02em;border:1px solid transparent;}
+  .nav-item:hover{background:rgba(79,127,255,0.07);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,rgba(79,127,255,0.16),rgba(155,122,255,0.08));color:var(--blue2);border-color:var(--border);}
+  .nav-icon{width:17px;height:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px;}
+  .nav-badge.gold{background:var(--gold);color:#000;}
+  .sidebar-bottom{padding:18px 14px 0;border-top:1px solid var(--border);}
+  .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:10px;border:1px solid var(--border);}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;color:white;flex-shrink:0;}
+  .user-info{flex:1;min-width:0;}
+  .user-name{font-size:11px;font-weight:500;color:var(--text);font-family:'Syne',sans-serif;}
+  .user-tier{font-size:9px;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;}
+
+  /* ── MAIN ── */
+  .main{margin-left:248px;min-height:100vh;position:relative;z-index:1;display:flex;flex-direction:column;overflow-y:auto;}
+  .topbar{position:sticky;top:0;background:rgba(8,12,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;z-index:50;}
+  .topbar-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.02em;}
+  .topbar-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+  .market-ticker{display:flex;gap:18px;align-items:center;}
+  .ticker-item{display:flex;flex-direction:column;align-items:flex-end;gap:1px;}
+  .ticker-label{font-size:9px;color:var(--text3);letter-spacing:0.1em;}
+  .ticker-val{font-size:12px;font-weight:500;}
+  .ticker-val.up{color:var(--green);}
+  .ticker-val.down{color:var(--red);}
+  .divider-v{width:1px;height:28px;background:var(--border);}
+  .alert-btn{width:34px;height:34px;background:var(--card2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:border-color .2s;}
+  .alert-btn:hover{border-color:var(--border2);}
+  .alert-dot{position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--red);border-radius:50%;border:1px solid var(--bg);}
+
+  /* ── SCREENS ── */
+  .screen{display:none;padding:26px 30px 40px;animation:fadeIn .3s ease;}
+  .screen.active{display:block;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── TOPBAR OVERLAP GUARD ── */
+  .topbar+*,.topbar~.screen{scroll-margin-top:65px;}
+
+  /* ── INSIGHT BANNER ── */
+  .insight-banner{background:linear-gradient(135deg,rgba(212,168,75,0.08),rgba(79,127,255,0.06));border:1px solid rgba(212,168,75,0.22);border-radius:12px;padding:13px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;}
+  .ib-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+  .ib-label{font-size:9px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:3px;}
+  .ib-text{font-size:11px;color:var(--text2);line-height:1.5;}
+  .ib-text strong{color:var(--text);}
+
+  /* ── CARDS ── */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,127,255,0.03) 0%,transparent 60%);pointer-events:none;}
+  .card-label{font-size:10px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+  .card-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--text);}
+  .card-value.gold{color:var(--gold2);}
+  .card-value.green{color:var(--green);}
+  .card-value.blue{color:var(--blue2);}
+  .card-change{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;padding:3px 8px;border-radius:6px;margin-top:7px;}
+  .card-change.up{background:rgba(0,229,160,0.1);color:var(--green);}
+  .card-change.down{background:rgba(255,77,106,0.1);color:var(--red);}
+  .card-change.neu{background:rgba(212,168,75,0.1);color:var(--gold2);}
+
+  /* ── GRIDS ── */
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .grid-main{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;margin-bottom:18px;}
+  .grid-main2{display:grid;grid-template-columns:1fr 1.35fr;gap:18px;margin-bottom:18px;}
+
+  /* ── SECTION HEADER ── */
+  .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:-0.01em;color:var(--text);}
+  .section-title span{font-family:'Instrument Serif',serif;font-style:italic;color:var(--gold2);}
+
+  /* ── CHIPS ── */
+  .chip{font-size:10px;font-weight:500;padding:4px 10px;border-radius:6px;letter-spacing:0.05em;background:rgba(79,127,255,0.1);color:var(--blue2);border:1px solid rgba(79,127,255,0.2);cursor:pointer;white-space:nowrap;}
+  .chip.gold{background:rgba(212,168,75,0.1);color:var(--gold2);border-color:rgba(212,168,75,0.2);}
+  .chip.green{background:rgba(0,229,160,0.1);color:var(--green);border-color:rgba(0,229,160,0.2);}
+  .chip.red{background:rgba(255,77,106,0.1);color:var(--red);border-color:rgba(255,77,106,0.2);}
+  .chip.purple{background:rgba(155,122,255,0.1);color:var(--purple);border-color:rgba(155,122,255,0.2);}
+  .chip.teal{background:rgba(0,212,184,0.1);color:var(--teal2);border-color:rgba(0,212,184,0.2);}
+
+  /* ── HEALTH SCORE ── */
+  .health-score-wrap{display:flex;flex-direction:column;align-items:center;padding:6px 0;}
+  .score-ring{position:relative;width:140px;height:140px;margin-bottom:14px;}
+  .score-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .score-num{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--gold2);line-height:1;}
+  .score-lbl{font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+  .score-pillars{width:100%;display:flex;flex-direction:column;gap:8px;}
+  .pillar{display:flex;align-items:center;gap:10px;}
+  .pillar-name{font-size:10px;color:var(--text2);width:98px;flex-shrink:0;}
+  .pillar-bar{flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+  .pillar-fill{height:100%;border-radius:99px;}
+  .pillar-val{font-size:10px;color:var(--text);width:22px;text-align:right;}
+
+  /* ── ALLOCATION ── */
+  .alloc-legend{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+  .alloc-item{display:flex;align-items:center;gap:10px;}
+  .alloc-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+  .alloc-name{font-size:11px;color:var(--text2);flex:1;}
+  .alloc-pct{font-size:12px;font-weight:500;color:var(--text);font-family:'Syne',sans-serif;}
+  .alloc-val{font-size:10px;color:var(--text3);width:60px;text-align:right;}
+
+  /* ── HOLDINGS TABLE ── */
+  .holdings-table{width:100%;border-collapse:collapse;}
+  .holdings-table th{font-size:9px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--text3);text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);}
+  .holdings-table th:last-child,.holdings-table td:last-child{text-align:right;}
+  .holdings-table td{padding:9px 10px;font-size:12px;color:var(--text2);border-bottom:1px solid rgba(99,132,255,0.05);}
+  .holdings-table tr:last-child td{border-bottom:none;}
+  .holdings-table tr:hover td{background:rgba(79,127,255,0.04);}
+  .holding-name{display:flex;align-items:center;gap:10px;}
+  .holding-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Syne',sans-serif;flex-shrink:0;}
+  .holding-label{font-size:12px;color:var(--text);font-weight:500;}
+  .holding-sub{font-size:9px;color:var(--text3);}
+  .pnl.pos{color:var(--green);}
+  .pnl.neg{color:var(--red);}
+
+  /* ── STAT ROW ── */
+  .stat-row{display:flex;justify-content:space-between;margin-top:14px;}
+  .stat-item{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .stat-val{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
+  .stat-lbl{font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+
+  /* ── RISK ── */
+  .risk-metric{display:flex;align-items:flex-start;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(99,132,255,0.07);}
+  .risk-metric:last-child{border-bottom:none;}
+  .risk-metric-name{font-size:12px;color:var(--text);font-weight:500;margin-bottom:3px;}
+  .risk-metric-desc{font-size:10px;color:var(--text3);max-width:240px;line-height:1.45;}
+  .risk-metric-right{display:flex;align-items:center;gap:12px;}
+  .risk-score-big{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em;}
+  .risk-bar-v{width:4px;height:40px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;}
+  .risk-bar-fill{width:100%;border-radius:99px;}
+
+  /* ── RESILIENCE TAG ── */
+  .resilience-tag{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;border-radius:99px;}
+  .resilience-tag.low{background:rgba(255,77,106,0.12);color:var(--red);border:1px solid rgba(255,77,106,0.25);}
+  .resilience-tag.med{background:rgba(212,168,75,0.12);color:var(--gold2);border:1px solid rgba(212,168,75,0.25);}
+  .resilience-tag.high{background:rgba(0,229,160,0.12);color:var(--green);border:1px solid rgba(0,229,160,0.25);}
+
+  /* ── CHAT ── */
+  .chat-container{display:flex;flex-direction:column;height:470px;background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--card2);}
+  .ai-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .ai-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);}
+  .ai-status{font-size:10px;color:var(--teal2);display:flex;align-items:center;gap:4px;}
+  .ai-status::before{content:'';width:6px;height:6px;background:var(--teal2);border-radius:50%;display:inline-block;box-shadow:0 0 8px var(--teal);}
+  .chat-messages{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:13px;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+  .msg{display:flex;gap:10px;max-width:88%;animation:msgIn .3s ease;}
+  @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg.user{align-self:flex-end;flex-direction:row-reverse;}
+  .msg-avatar{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Syne',sans-serif;}
+  .msg-avatar.ai{background:linear-gradient(135deg,var(--blue),var(--teal));color:white;}
+  .msg-avatar.user{background:linear-gradient(135deg,var(--purple),var(--blue));color:white;}
+  .msg-bubble{padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.55;color:var(--text);}
+  .msg.ai .msg-bubble{background:var(--card2);border:1px solid var(--border);border-radius:12px 12px 12px 2px;}
+  .msg.user .msg-bubble{background:linear-gradient(135deg,rgba(79,127,255,0.22),rgba(155,122,255,0.14));border:1px solid rgba(79,127,255,0.24);border-radius:12px 12px 2px 12px;}
+  .msg-highlight{display:inline-block;background:rgba(212,168,75,0.15);color:var(--gold2);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:500;}
+  .chat-suggestions{padding:8px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap;background:var(--card2);}
+  .suggestion{font-size:10px;padding:5px 10px;border-radius:6px;border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s;background:transparent;font-family:'DM Mono',monospace;}
+  .suggestion:hover{border-color:var(--blue2);color:var(--blue2);background:rgba(79,127,255,0.06);}
+  .chat-input-row{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;}
+  .chat-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 14px;font-size:12px;color:var(--text);font-family:'DM Mono',monospace;outline:none;transition:border-color .2s;}
+  .chat-input:focus{border-color:var(--blue);}
+  .chat-input::placeholder{color:var(--text3);}
+  .send-btn{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+  .send-btn:hover{transform:scale(1.05);box-shadow:0 4px 15px rgba(79,127,255,0.4);}
+  .insight-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px;display:flex;gap:12px;align-items:flex-start;}
+  .insight-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .insight-title{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px;font-family:'Syne',sans-serif;}
+  .insight-body{font-size:11px;color:var(--text2);line-height:1.44;}
+
+  /* ── SCENARIO ── */
+  .scenario-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .scenario-tab{padding:8px 14px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent;font-family:'DM Mono',monospace;transition:all .25s;letter-spacing:.02em;white-space:nowrap;}
+  .scenario-tab.active{background:linear-gradient(135deg,rgba(255,77,106,0.15),rgba(255,77,106,0.05));border-color:rgba(255,77,106,0.35);color:var(--red);}
+  .scenario-tab.active.income{background:linear-gradient(135deg,rgba(212,168,75,0.15),rgba(212,168,75,0.05));border-color:rgba(212,168,75,0.35);color:var(--gold2);}
+  .scenario-tab:not(.active):hover{border-color:var(--border2);color:var(--text);}
+  .impact-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(99,132,255,0.07);}
+  .impact-row:last-child{border-bottom:none;}
+  .impact-name{font-size:11px;color:var(--text2);min-width:0;flex-shrink:0;width:160px;}
+  .impact-bar-wrap{flex:1;margin:0 14px;height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+  .impact-fill{height:100%;border-radius:99px;}
+  .impact-val{font-size:12px;font-weight:500;width:60px;text-align:right;font-family:'Syne',sans-serif;}
+  .scenario-summary-box{background:linear-gradient(135deg,rgba(255,77,106,0.06),rgba(255,77,106,0.02));border:1px solid rgba(255,77,106,0.2);border-radius:12px;padding:16px 18px;margin-top:4px;}
+  .scenario-summary-box.income{background:linear-gradient(135deg,rgba(212,168,75,0.06),rgba(212,168,75,0.02));border-color:rgba(212,168,75,0.2);}
+  .scenario-summary-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--red);margin-bottom:6px;}
+  .scenario-summary-title.income{color:var(--gold2);}
+  .scenario-summary-val{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;letter-spacing:-0.03em;color:var(--red);margin-bottom:4px;}
+  .scenario-summary-val.income{color:var(--gold2);}
+  .scenario-summary-sub{font-size:10px;color:var(--text3);}
+  .resilience-meter{display:flex;align-items:center;gap:10px;margin-top:8px;}
+  .res-label{font-size:9px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;width:70px;}
+  .res-bar{flex:1;height:5px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+  .res-fill{height:100%;border-radius:99px;}
+  .res-pct{font-size:10px;font-weight:600;width:30px;text-align:right;}
+
+  /* ── SLIDER ── */
+  .slider-wrap{margin:13px 0 0;}
+  .slider-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:6px;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:99px;background:rgba(255,255,255,0.08);outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--blue2);cursor:pointer;border:2px solid var(--bg);box-shadow:0 0 8px rgba(79,127,255,0.5);}
+
+  /* ── TYPING ── */
+  .typing-dots span{display:inline-block;width:5px;height:5px;background:var(--text3);border-radius:50%;margin:0 1px;animation:bounce 1.2s infinite;}
+  .typing-dots span:nth-child(2){animation-delay:.2s;}
+  .typing-dots span:nth-child(3){animation-delay:.4s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+  /* ── MISC ── */
+  .watermark{position:fixed;bottom:14px;right:22px;font-size:9px;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;opacity:0.45;z-index:200;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+
+  /* ── CURRENCY TAG ── */
+  .sgd-tag{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(0,212,184,0.1);color:var(--teal2);border:1px solid rgba(0,212,184,0.2);letter-spacing:0.08em;font-weight:500;}
+
+  /* ── CPF BADGE ── */
+  .cpf-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(155,122,255,0.1);color:var(--purple);border:1px solid rgba(155,122,255,0.2);letter-spacing:0.06em;}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-eyebrow"><div class="logo-dot"></div><div class="logo-mark">Financial Health Intelligence</div></div>
+    <div class="logo-name">QuantForge</div>
+    <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:13px;color:var(--gold2);margin-top:1px;">WealthOS</div>
+    <div class="logo-sub">Track wealth · Diagnose health · Improve resilience</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(99,132,255,0.08);">
+      <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:11px;color:var(--text3);line-height:1.45;">"Most platforms show what you own.<br>QuantForge shows how healthy your wealth is."</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Overview</div>
+    <div class="nav-item active" onclick="showScreen('dashboard')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".85"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".4"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity=".85"/></svg></div>
+      Wealth Dashboard
+    </div>
+
+    <div class="nav-label">Analysis</div>
+    <div class="nav-item" onclick="showScreen('risk')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L14 13H2L8 1Z" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 6V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11" r=".75" fill="currentColor"/></svg></div>
+      Risk &amp; Resilience
+      <span class="nav-badge">4</span>
+    </div>
+
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item" onclick="showScreen('coach')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7C5.5 5.62 6.62 4.5 8 4.5C9.38 4.5 10.5 5.62 10.5 7C10.5 8.38 8 9.5 8 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".75" fill="currentColor"/></svg></div>
+      Aura Wealth Coach
+    </div>
+
+    <div class="nav-item" onclick="showScreen('scenario')">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12L6 7L9 10L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="4" r="1.5" fill="currentColor" opacity=".7"/></svg></div>
+      Scenario Simulator
+      <span class="nav-badge gold">NEW</span>
+    </div>
+
+    <div class="nav-label">Planning</div>
+    <div class="nav-item" style="opacity:.45;cursor:default;">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M5 3V1.5M11 3V1.5M2 7h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      Goals &amp; Milestones
+      <span style="margin-left:auto;font-size:9px;color:var(--text3);letter-spacing:.05em;">SOON</span>
+    </div>
+    <div class="nav-item" style="opacity:.45;cursor:default;">
+      <div class="nav-icon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+      Tax Efficiency
+      <span style="margin-left:auto;font-size:9px;color:var(--text3);letter-spacing:.05em;">SOON</span>
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div style="font-size:9px;color:var(--text3);letter-spacing:0.08em;text-align:center;margin-bottom:10px;line-height:1.4;">Built for self-directed investors<br>and advisory workflows</div>
+    <div class="user-card">
+      <div class="avatar">SB</div>
+      <div class="user-info">
+        <div class="user-name">Soham Bisaria</div>
+        <div class="user-tier">◆ Platinum · SG Resident</div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="main">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Wealth Health Dashboard</div>
+      <div class="topbar-sub" id="topbar-sub">Last synced: Today, 9:14 AM SGT · 11 accounts · Listed + Non-listed assets</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="market-ticker">
+        <div class="ticker-item"><div class="ticker-label">STI</div><div class="ticker-val up">3,412 ▲ 0.64%</div></div>
+        <div class="ticker-item"><div class="ticker-label">S&P 500</div><div class="ticker-val up">5,248 ▲ 0.47%</div></div>
+        <div class="ticker-item"><div class="ticker-label">BTC/USD</div><div class="ticker-val down">61,420 ▼ 2.14%</div></div>
+        <div class="ticker-item"><div class="ticker-label">USD/SGD</div><div class="ticker-val up">1.344 ▲ 0.12%</div></div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="sgd-tag">SGD</div>
+      <div class="alert-btn">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1.5C8 1.5 4 4 4 9v1L2.5 12h11L12 10V9C12 4 8 1.5 8 1.5Z" stroke="#8a9bbf" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 12.5C6.5 13.33 7.17 14 8 14C8.83 14 9.5 13.33 9.5 12.5" stroke="#8a9bbf" stroke-width="1.5"/></svg>
+        <div class="alert-dot"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════════ DASHBOARD ══════════════════ -->
+  <div class="screen active" id="screen-dashboard">
+
+    <div class="insight-banner">
+      <div class="ib-icon">⚡</div>
+      <div>
+        <div class="ib-label">Wealth Health Diagnosis</div>
+        <div class="ib-text">Your wealth is compounding well, but resilience is weakened by <strong>concentrated US tech exposure (38%)</strong> and a <strong>liquidity buffer covering only 3.8 months</strong> of expenses. Two targeted actions could lift your Health Score from 81 → 91.</div>
+      </div>
+      <div style="margin-left:auto;flex-shrink:0;display:flex;gap:8px;align-items:center;">
+        <div class="chip gold">View Actions</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px;">
+      <div class="card">
+        <div class="card-label">Total Net Worth</div>
+        <div class="card-value gold">S$842,600</div>
+        <div class="card-change up">▲ 14.2% YTD</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Liquid Assets</div>
+        <div class="card-value blue">S$112,400</div>
+        <div class="card-change down">3.8 mo · below target</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Portfolio Returns</div>
+        <div class="card-value green">+18.7%</div>
+        <div class="card-change up">vs 12.4% STI benchmark</div>
+      </div>
+      <div class="card">
+        <div class="card-label">CPF + Retirement</div>
+        <div class="card-value" style="color:var(--purple)">S$186,300</div>
+        <div class="card-change neu">OA + SA + SRS</div>
+      </div>
+      <div class="card" style="border-color:rgba(212,168,75,0.22);background:linear-gradient(135deg,rgba(212,168,75,0.05),var(--card));">
+        <div class="card-label" style="color:var(--gold);">Resilience Gap</div>
+        <div class="card-value" style="font-size:22px;color:var(--gold2);">+10 pts</div>
+        <div style="margin-top:8px;">
+          <div style="font-size:9px;color:var(--text3);margin-bottom:5px;letter-spacing:0.06em;">81 → 91 from 2 actions</div>
+          <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
+            <div style="width:81%;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <div style="font-size:9px;color:var(--text3);">Current 81</div>
+            <div style="font-size:9px;color:var(--gold);">Target 91 ◆</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-main">
+      <!-- Net Worth Chart -->
+      <div class="card">
+        <div class="section-hdr">
+          <div>
+            <div class="section-title">Net Worth <span>Trajectory</span></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">36-month view · listed + non-listed · dotted = target path</div>
+          </div>
+          <div style="display:flex;gap:7px;"><div class="chip">1Y</div><div class="chip gold">3Y</div><div class="chip">5Y</div></div>
+        </div>
+        <div style="height:195px;"><canvas id="networthChart"></canvas></div>
+        <div class="stat-row">
+          <div class="stat-item"><div class="stat-val" style="color:var(--green)">S$842K</div><div class="stat-lbl">Current</div></div>
+          <div class="stat-item"><div class="stat-val">S$737K</div><div class="stat-lbl">1Y Ago</div></div>
+          <div class="stat-item"><div class="stat-val">S$521K</div><div class="stat-lbl">3Y Ago</div></div>
+          <div class="stat-item"><div class="stat-val" style="color:var(--gold2)">S$960K</div><div class="stat-lbl">Target</div></div>
+        </div>
+      </div>
+
+      <!-- Health Score -->
+      <div class="card">
+        <div class="section-hdr">
+          <div class="section-title">Financial <span>Health Score</span></div>
+          <div class="chip gold">Good</div>
+        </div>
+        <div class="health-score-wrap">
+          <div class="score-ring">
+            <canvas id="healthRing" width="140" height="140"></canvas>
+            <div class="score-inner">
+              <div class="score-num">81</div>
+              <div class="score-lbl">/ 100</div>
+            </div>
+          </div>
+          <div class="score-pillars" style="padding:0 4px;">
+            <div class="pillar"><div class="pillar-name">Diversification</div><div class="pillar-bar"><div class="pillar-fill" style="width:72%;background:var(--blue2)"></div></div><div class="pillar-val">72</div></div>
+            <div class="pillar"><div class="pillar-name">Liquidity</div><div class="pillar-bar"><div class="pillar-fill" style="width:58%;background:var(--gold)"></div></div><div class="pillar-val">58</div></div>
+            <div class="pillar"><div class="pillar-name">Debt Health</div><div class="pillar-bar"><div class="pillar-fill" style="width:91%;background:var(--green)"></div></div><div class="pillar-val">91</div></div>
+            <div class="pillar"><div class="pillar-name">Goal Alignment</div><div class="pillar-bar"><div class="pillar-fill" style="width:84%;background:var(--purple)"></div></div><div class="pillar-val">84</div></div>
+            <div class="pillar"><div class="pillar-name">Shock Resilience</div><div class="pillar-bar"><div class="pillar-fill" style="width:62%;background:var(--teal)"></div></div><div class="pillar-val">62</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-main2">
+      <!-- Holdings Table -->
+      <div class="card">
+        <div class="section-hdr">
+          <div class="section-title">Total Wealth <span>Breakdown</span></div>
+          <div style="display:flex;gap:7px;align-items:center;"><div class="cpf-badge">CPF Included</div><div class="chip teal">All Assets</div></div>
+        </div>
+        <table class="holdings-table">
+          <thead><tr><th>Asset Class</th><th>Value</th><th>Alloc</th><th>Return</th></tr></thead>
+          <tbody>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(79,127,255,0.2);color:var(--blue2)">US</div><div><div class="holding-label">US Equities &amp; ETFs</div><div class="holding-sub">VTI, QQQ, AAPL · 3 more</div></div></div></td><td style="color:var(--text)">S$236,300</td><td style="color:var(--text)">28%</td><td class="pnl pos">+28.4%</td></tr>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(155,122,255,0.2);color:var(--purple)">CPF</div><div><div class="holding-label">CPF &amp; SRS</div><div class="holding-sub">OA · SA · SRS account</div></div></div></td><td style="color:var(--text)">S$186,300</td><td style="color:var(--text)">22%</td><td class="pnl pos">+5.0%</td></tr>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(212,168,75,0.2);color:var(--gold2)">RE</div><div><div class="holding-label">SG Condo (partial)</div><div class="holding-sub">Tanjong Pagar · est. value</div></div></div></td><td style="color:var(--text)">S$168,000</td><td style="color:var(--text)">20%</td><td class="pnl pos">+11.2%</td></tr>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(0,212,184,0.2);color:var(--teal2)">REIT</div><div><div class="holding-label">SG REITs</div><div class="holding-sub">CICT, Mapletree · 2 more</div></div></div></td><td style="color:var(--text)">S$118,600</td><td style="color:var(--text)">14%</td><td class="pnl pos">+9.7%</td></tr>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(0,229,160,0.2);color:var(--green)">FI</div><div><div class="holding-label">Bonds &amp; Fixed Income</div><div class="holding-sub">MAS T-bills · SSB · FD</div></div></div></td><td style="color:var(--text)">S$84,200</td><td style="color:var(--text)">10%</td><td class="pnl pos">+4.1%</td></tr>
+            <tr><td><div class="holding-name"><div class="holding-icon" style="background:rgba(255,140,0,0.2);color:#ffa500">₿</div><div><div class="holding-label">Crypto</div><div class="holding-sub">BTC · ETH · stablecoins</div></div></div></td><td style="color:var(--text)">S$49,200</td><td style="color:var(--text)">6%</td><td class="pnl neg">−11.8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Asset Allocation Donut -->
+      <div class="card">
+        <div class="section-hdr">
+          <div class="section-title">Asset <span>Allocation</span></div>
+          <div class="chip purple">Cross-Asset</div>
+        </div>
+        <div style="height:175px;"><canvas id="allocChart"></canvas></div>
+        <div class="alloc-legend">
+          <div class="alloc-item"><div class="alloc-dot" style="background:#4f7fff"></div><div class="alloc-name">US Equities &amp; ETFs</div><div class="alloc-pct">28%</div><div class="alloc-val">S$236K</div></div>
+          <div class="alloc-item"><div class="alloc-dot" style="background:#9b7aff"></div><div class="alloc-name">CPF &amp; SRS</div><div class="alloc-pct">22%</div><div class="alloc-val">S$186K</div></div>
+          <div class="alloc-item"><div class="alloc-dot" style="background:#d4a84b"></div><div class="alloc-name">SG Property</div><div class="alloc-pct">20%</div><div class="alloc-val">S$168K</div></div>
+          <div class="alloc-item"><div class="alloc-dot" style="background:#00d4b8"></div><div class="alloc-name">SG REITs</div><div class="alloc-pct">14%</div><div class="alloc-val">S$119K</div></div>
+          <div class="alloc-item"><div class="alloc-dot" style="background:#00e5a0"></div><div class="alloc-name">Bonds &amp; Fixed Income</div><div class="alloc-pct">10%</div><div class="alloc-val">S$84K</div></div>
+          <div class="alloc-item"><div class="alloc-dot" style="background:#ff8c00"></div><div class="alloc-name">Crypto</div><div class="alloc-pct">6%</div><div class="alloc-val">S$49K</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ RISK & RESILIENCE ══════════════════ -->
+  <div class="screen" id="screen-risk">
+
+    <div class="insight-banner" style="border-color:rgba(255,77,106,0.22);background:linear-gradient(135deg,rgba(255,77,106,0.06),rgba(79,127,255,0.04));">
+      <div class="ib-icon">🔍</div>
+      <div>
+        <div class="ib-label" style="color:var(--red)">Risk Diagnosis</div>
+        <div class="ib-text">US tech concentration exceeds your internal resilience threshold. A 30% tech drawdown would reduce portfolio value by <strong>~S$71K</strong>. Liquidity and currency risks also require attention.</div>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="card"><div class="card-label">Overall Risk Score</div><div class="card-value" style="color:var(--gold2)">6.4 / 10</div><div class="card-change neu">● Moderate-High</div></div>
+      <div class="card"><div class="card-label">Portfolio Beta</div><div class="card-value blue">1.31</div><div class="card-change down">Elevated market sensitivity</div></div>
+      <div class="card"><div class="card-label">Sharpe Ratio</div><div class="card-value green">1.72</div><div class="card-change up">Strong risk-adj return</div></div>
+      <div class="card"><div class="card-label">Max Drawdown</div><div class="card-value" style="color:var(--red)">−22.1%</div><div class="card-change down">Oct 2022 stress event</div></div>
+    </div>
+
+    <div class="grid-main">
+      <div class="card">
+        <div class="section-hdr">
+          <div class="section-title">Total Financial <span>Risk Matrix</span></div>
+          <div style="display:flex;gap:7px;"><div class="chip red">Portfolio</div><div class="chip">Benchmark</div></div>
+        </div>
+        <div style="height:290px;display:flex;align-items:center;justify-content:center;">
+          <canvas id="radarChart" width="320" height="290"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-hdr"><div class="section-title">Risk <span>Factor Breakdown</span></div></div>
+
+        <div class="risk-metric">
+          <div><div class="risk-metric-name">Concentration Risk</div><div class="risk-metric-desc">US tech (QQQ + AAPL + NVDA) represents 38% of liquid portfolio, exceeding the 25% concentration ceiling.</div></div>
+          <div class="risk-metric-right"><div class="risk-bar-v"><div class="risk-bar-fill" style="height:82%;background:var(--red)"></div></div><div class="risk-score-big" style="color:var(--red)">8.2</div></div>
+        </div>
+        <div class="risk-metric">
+          <div><div class="risk-metric-name">Liquidity Risk</div><div class="risk-metric-desc">Emergency buffer covers 3.8 months of expenses. MAS-aligned guidance recommends a 6-month minimum.</div></div>
+          <div class="risk-metric-right"><div class="risk-bar-v"><div class="risk-bar-fill" style="height:66%;background:var(--gold)"></div></div><div class="risk-score-big" style="color:var(--gold2)">6.6</div></div>
+        </div>
+        <div class="risk-metric">
+          <div><div class="risk-metric-name">Currency Exposure</div><div class="risk-metric-desc">68% of investable assets are USD-denominated. SGD appreciation risk of 5–8% could erode returns.</div></div>
+          <div class="risk-metric-right"><div class="risk-bar-v"><div class="risk-bar-fill" style="height:60%;background:var(--blue)"></div></div><div class="risk-score-big" style="color:var(--blue2)">6.0</div></div>
+        </div>
+        <div class="risk-metric">
+          <div><div class="risk-metric-name">Volatility Exposure</div><div class="risk-metric-desc">Crypto + high-beta tech holdings generate 30D realized vol of 21.4% annualized — above peer median.</div></div>
+          <div class="risk-metric-right"><div class="risk-bar-v"><div class="risk-bar-fill" style="height:55%;background:var(--purple)"></div></div><div class="risk-score-big" style="color:var(--purple)">5.5</div></div>
+        </div>
+        <div class="risk-metric">
+          <div><div class="risk-metric-name">Diversification Quality</div><div class="risk-metric-desc">Cross-asset correlation of 0.39 provides moderate diversification. Defensive income allocation is low.</div></div>
+          <div class="risk-metric-right"><div class="risk-bar-v"><div class="risk-bar-fill" style="height:74%;background:var(--green)"></div></div><div class="risk-score-big" style="color:var(--green)">7.4</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-hdr">
+        <div class="section-title">Rolling 30D <span>Volatility</span> vs STI Benchmark</div>
+        <div class="chip red">Annualized %</div>
+      </div>
+      <div style="height:148px;"><canvas id="volChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ AI WEALTH COACH ══════════════════ -->
+  <div class="screen" id="screen-coach">
+    <div class="grid-main">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="ai-avatar">✦</div>
+            <div style="flex:1;">
+              <div class="ai-name">Aura — AI Wealth Coach</div>
+              <div class="ai-status">Online · QuantForge Intelligence Engine active</div>
+            </div>
+            <div style="display:flex;gap:7px;">
+              <div class="chip teal">Powered by Aura AI</div>
+              <div class="chip">SG-Aligned</div>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="msg ai">
+              <div class="msg-avatar ai">✦</div>
+              <div class="msg-bubble">
+                Good morning, Soham. I've completed your weekly wealth health scan across all 11 connected accounts.<br><br>
+                ✅ Net worth up <span class="msg-highlight">+14.2% YTD</span> — tracking ahead of your 3-year target.<br>
+                ⚠️ US tech concentration at <span class="msg-highlight">38%</span> — above your resilience threshold.<br>
+                🔴 Emergency liquidity buffer at <span class="msg-highlight">3.8 months</span> — below the 6-month recommended level.<br>
+                💡 SRS annual contribution still <span class="msg-highlight">S$3,400 short</span> of the S$15,300 cap.<br><br>
+                Where shall we focus today?
+              </div>
+            </div>
+            <div class="msg user">
+              <div class="msg-avatar user">SB</div>
+              <div class="msg-bubble">How can I improve my resilience score?</div>
+            </div>
+            <div class="msg ai">
+              <div class="msg-avatar ai">✦</div>
+              <div class="msg-bubble">
+                Your Shock Resilience score of 62 is the main drag. Here's a prioritised action plan:<br><br>
+                <strong style="color:var(--gold2)">1. Raise emergency liquidity</strong><br>
+                Move S$28,000 from your FD rollover into a money market fund (Lion-OCBC SGD Money Market earns ~3.8%). Gets you to 5.8 months coverage.<br><br>
+                <strong style="color:var(--blue2)">2. Trim concentrated US tech</strong><br>
+                Reduce QQQ + AAPL combined from 38% → 24% of liquid assets. Rotate into <span class="msg-highlight">Vanguard Total World ETF (VT)</span> for broader exposure.<br><br>
+                <strong style="color:var(--green)">3. Increase income-generating assets</strong><br>
+                Add S$20K to SG REIT allocation (CICT or Mapletree PanAsia). Generates ~5.4% yield and reduces recovery time after a shock.<br><br>
+                These three actions would lift your Resilience score from 62 → ~82.
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-suggestions">
+            <div class="suggestion" onclick="sendMessage('how can i improve my resilience?')">🛡️ Improve resilience</div>
+            <div class="suggestion" onclick="sendMessage('should i rebalance my portfolio?')">⚖️ Rebalance portfolio</div>
+            <div class="suggestion" onclick="sendMessage('how exposed am i to a tech selloff?')">📉 Tech selloff exposure</div>
+            <div class="suggestion" onclick="sendMessage('am i on track for retirement?')">🎯 Retirement readiness</div>
+            <div class="suggestion" onclick="sendMessage('how should i optimise my srs contributions?')">💰 SRS optimisation</div>
+          </div>
+
+          <div class="chat-input-row">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Ask Aura about your financial health…" onkeypress="handleKey(event)">
+            <button class="send-btn" onclick="sendChatMessage()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7L13 1L9 7L13 13L1 7Z" fill="white"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insights panel -->
+      <div style="display:flex;flex-direction:column;gap:13px;">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:13px;">This Week's <span>Priority Actions</span></div>
+          <div style="display:flex;flex-direction:column;gap:9px;">
+            <div class="insight-card">
+              <div class="insight-icon" style="background:rgba(255,77,106,0.1);">🔴</div>
+              <div><div class="insight-title">Raise Emergency Buffer</div><div class="insight-body">Move S$28K to money market fund. Currently at 3.8 months — target is 6 months.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-icon" style="background:rgba(79,127,255,0.1);">📊</div>
+              <div><div class="insight-title">Trim US Tech Concentration</div><div class="insight-body">QQQ + AAPL at 38%. Rotate S$35K into global diversified ETF to reduce single-factor risk.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-icon" style="background:rgba(155,122,255,0.1);">💎</div>
+              <div><div class="insight-title">Top Up SRS — S$3,400 Left</div><div class="insight-body">S$3,400 remaining before S$15,300 cap. Reduces chargeable income by equivalent amount.</div></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-icon" style="background:rgba(0,229,160,0.1);">🏢</div>
+              <div><div class="insight-title">REIT Income Opportunity</div><div class="insight-body">SG REIT allocation at 14% generates S$6,400/yr yield. Add S$20K to lift yield income by ~S$1,100/yr.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-title" style="margin-bottom:12px;">Aura's <span>Guidance</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border);">
+              <div><div style="font-size:12px;color:var(--text);font-weight:500;">Vanguard Total World ETF</div><div style="font-size:10px;color:var(--text3);">Broadens geographic diversification</div></div>
+              <div class="chip green">Increase</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border);">
+              <div><div style="font-size:12px;color:var(--text);font-weight:500;">MAS 6-Month T-Bill</div><div style="font-size:10px;color:var(--text3);">3.74% yield · SGD-denominated</div></div>
+              <div class="chip gold">Maintain</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border);">
+              <div><div style="font-size:12px;color:var(--text);font-weight:500;">QQQ Overweight</div><div style="font-size:10px;color:var(--text3);">38% tech concentration exceeds threshold</div></div>
+              <div class="chip red">Reduce</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--card2);border-radius:8px;border:1px solid var(--border);">
+              <div><div style="font-size:12px;color:var(--text);font-weight:500;">SOL / High-Beta Crypto</div><div style="font-size:10px;color:var(--text3);">Volatility drag on resilience score</div></div>
+              <div class="chip red">Reduce</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════ SCENARIO SIMULATOR ══════════════════ -->
+  <div class="screen" id="screen-scenario">
+
+    <div class="insight-banner" style="border-color:rgba(255,77,106,0.2);background:linear-gradient(135deg,rgba(255,77,106,0.05),rgba(212,168,75,0.03));">
+      <div class="ib-icon">🧪</div>
+      <div>
+        <div class="ib-label" style="color:var(--red)">Resilience Stress Testing</div>
+        <div class="ib-text">See how your wealth holds up across market shocks and real-life events. QuantForge models drawdown, recovery time, and the actions that meaningfully improve outcomes.</div>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="card"><div class="card-label">Active Scenario</div><div class="card-value" style="color:var(--red);font-size:20px;">US Tech Crash</div><div class="card-change down">−40% shock applied</div></div>
+      <div class="card"><div class="card-label">Projected Drawdown</div><div class="card-value" style="color:var(--red)">−S$154K</div><div class="card-change down">18.3% of net worth</div></div>
+      <div class="card"><div class="card-label">Portfolio Resilience</div><div class="card-value" style="color:var(--gold2)">62%</div><div class="card-change neu">Moderate — improvable</div></div>
+      <div class="card"><div class="card-label">Recovery Estimate</div><div class="card-value blue">16 Mo</div><div class="card-change up">Below 20mo peer avg</div></div>
+    </div>
+
+    <div class="scenario-tabs">
+      <button class="scenario-tab active" id="tab-tech" onclick="switchScenario('tech')">🖥️ US Tech Crash −40%</button>
+      <button class="scenario-tab" id="tab-rate" onclick="switchScenario('rate')">📈 Rate Hike +200bps</button>
+      <button class="scenario-tab" id="tab-crypto" onclick="switchScenario('crypto')">₿ Crypto Drawdown −60%</button>
+      <button class="scenario-tab" id="tab-income" onclick="switchScenario('income')">💼 Income Shock — 6 Mo</button>
+    </div>
+
+    <div class="grid-main">
+      <div class="card">
+        <div class="section-hdr">
+          <div>
+            <div class="section-title" id="scene-title">Portfolio Impact — <span>US Tech Crash</span></div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="scene-sub">Simulated drawdown path vs baseline trajectory</div>
+          </div>
+          <div class="chip red" id="scene-chip">−40% Shock</div>
+        </div>
+        <div style="height:205px;"><canvas id="scenarioChart"></canvas></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:16px;">
+          <div style="flex:1;">
+            <div class="slider-wrap" style="margin-top:0;">
+              <div class="slider-label"><span>Shock Intensity</span><span id="slider-val">−40%</span></div>
+              <input type="range" min="10" max="70" value="40" id="shock-slider" oninput="updateSlider(this.value)">
+            </div>
+          </div>
+          <div id="resilience-meter-wrap" style="flex-shrink:0;min-width:140px;">
+            <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;">Resilience Level</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;"><div id="res-fill-bar" style="height:100%;border-radius:99px;width:62%;background:var(--gold);"></div></div>
+              <div id="res-pct-val" style="font-size:11px;font-weight:600;color:var(--gold2);width:28px;text-align:right;">62%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="card">
+          <div class="section-hdr"><div class="section-title">Asset Class <span>Impact</span></div></div>
+          <div id="impact-rows"></div>
+        </div>
+
+        <div class="scenario-summary-box" id="scenario-summary-box">
+          <div class="scenario-summary-title" id="scene-sum-title">📉 US Tech Crash</div>
+          <div class="scenario-summary-val" id="scene-loss">−S$154K</div>
+          <div class="scenario-summary-sub" id="scene-sublabel">18.3% drawdown · Recovery: ~16 months · Resilience: Moderate</div>
+        </div>
+
+        <div class="card">
+          <div class="section-title" style="margin-bottom:11px;">Resilience <span>Actions</span></div>
+          <div id="protective-actions" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="watermark">QuantForge WealthOS · Financial Health Intelligence Platform · Wealth Wellness Hub</div>
+
+<script>
+// ── NAV ──
+Chart.defaults.color='#4a5878';
+Chart.defaults.borderColor='rgba(99,132,255,0.08)';
+Chart.defaults.font.family="'DM Mono',monospace";
+
+const SCREENS={
+  dashboard:['Wealth Health Dashboard','Last synced: Today, 9:14 AM SGT · 11 accounts · Listed + Non-listed assets'],
+  risk:['Risk & Resilience Analyzer','Total financial risk scoring across 6 dimensions · Cross-border exposure included'],
+  coach:['Aura Wealth Coach','Personalised financial health guidance · QuantForge Intelligence Engine'],
+  scenario:['Scenario Simulator — Resilience Testing','Stress-test your wealth against market shocks and real-life events']
+};
+const NAVIDX={dashboard:0,risk:1,coach:2,scenario:3};
+let riskDone=false,sceneDone=false,sceneChartInst=null;
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item')[NAVIDX[name]].classList.add('active');
+  document.getElementById('topbar-title').textContent=SCREENS[name][0];
+  document.getElementById('topbar-sub').textContent=SCREENS[name][1];
+  if(name==='risk'&&!riskDone){buildRisk();riskDone=true;}
+  if(name==='scenario'&&!sceneDone){buildScene('tech');sceneDone=true;}
+}
+
+// ── DASHBOARD ──
+function initDash(){
+  // Networth chart
+  const months=[];
+  for(let i=35;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);months.push(d.toLocaleDateString('en-SG',{month:'short',year:'2-digit'}));}
+  const nw=[521,538,545,556,548,562,574,568,581,592,584,598,610,616,607,622,634,628,642,655,647,661,670,666,678,690,685,698,706,718,728,734,743,751,759,842];
+  const ctx1=document.getElementById('networthChart').getContext('2d');
+  const g1=ctx1.createLinearGradient(0,0,0,195);
+  g1.addColorStop(0,'rgba(79,127,255,0.28)');g1.addColorStop(1,'rgba(79,127,255,0)');
+  new Chart(ctx1,{type:'line',data:{labels:months,datasets:[
+    {data:nw,borderColor:'#4f7fff',borderWidth:2,pointRadius:0,fill:true,backgroundColor:g1,tension:0.4},
+    {data:months.map((_,i)=>521+(i*(960-521)/35)),borderColor:'rgba(212,168,75,0.38)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#141d2e',borderColor:'rgba(99,132,255,0.2)',borderWidth:1,callbacks:{label:c=>'S$'+c.raw+'K'}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:6,font:{size:9}}},y:{grid:{color:'rgba(99,132,255,0.06)'},ticks:{callback:v=>'S$'+v+'K',font:{size:9}}}}}});
+
+  // Alloc donut
+  const ctx2=document.getElementById('allocChart').getContext('2d');
+  new Chart(ctx2,{type:'doughnut',data:{labels:['US Equities/ETFs','CPF & SRS','SG Property','SG REITs','Bonds/FI','Crypto'],datasets:[{data:[28,22,20,14,10,6],backgroundColor:['#4f7fff','#9b7aff','#d4a84b','#00d4b8','#00e5a0','#ff8c00'],borderColor:'#0f1623',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{backgroundColor:'#141d2e',borderColor:'rgba(99,132,255,0.2)',borderWidth:1,callbacks:{label:c=>c.label+': '+c.raw+'%'}}}}});
+
+  // Health ring
+  const hc=document.getElementById('healthRing');
+  const hx=hc.getContext('2d');
+  const cx=70,cy=70,r=54,sa=-Math.PI/2,ea=sa+(2*Math.PI*81/100);
+  hx.beginPath();hx.arc(cx,cy,r,0,2*Math.PI);hx.strokeStyle='rgba(99,132,255,0.08)';hx.lineWidth=10;hx.stroke();
+  const hg=hx.createLinearGradient(0,0,140,0);hg.addColorStop(0,'#d4a84b');hg.addColorStop(1,'#f0c96a');
+  hx.beginPath();hx.arc(cx,cy,r,sa,ea);hx.strokeStyle='rgba(212,168,75,0.18)';hx.lineWidth=18;hx.lineCap='round';hx.stroke();
+  hx.beginPath();hx.arc(cx,cy,r,sa,ea);hx.strokeStyle=hg;hx.lineWidth=10;hx.lineCap='round';hx.stroke();
+}
+
+// ── RISK ──
+function buildRisk(){
+  // Radar
+  const rc=document.getElementById('radarChart').getContext('2d');
+  new Chart(rc,{type:'radar',data:{labels:['Concentration','Liquidity','Currency','Volatility','Debt','Diversification'],datasets:[
+    {label:'Portfolio',data:[8.2,6.6,6.0,5.5,2.2,7.4],borderColor:'#ff4d6a',backgroundColor:'rgba(255,77,106,0.1)',borderWidth:2,pointBackgroundColor:'#ff4d6a',pointRadius:4},
+    {label:'Benchmark',data:[5,5,5,5,5,5],borderColor:'rgba(79,127,255,0.5)',backgroundColor:'rgba(79,127,255,0.05)',borderWidth:1.5,borderDash:[4,4],pointBackgroundColor:'#4f7fff',pointRadius:3}
+  ]},options:{responsive:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,font:{size:10}}}},scales:{r:{min:0,max:10,grid:{color:'rgba(99,132,255,0.1)'},angleLines:{color:'rgba(99,132,255,0.1)'},ticks:{stepSize:2,font:{size:8},backdropColor:'transparent'},pointLabels:{font:{size:10},color:'#8a9bbf'}}}}});
+
+  // Volatility
+  const vl=[];
+  for(let i=23;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);vl.push(d.toLocaleDateString('en-SG',{month:'short',year:'2-digit'}));}
+  const vc=document.getElementById('volChart').getContext('2d');
+  new Chart(vc,{type:'line',data:{labels:vl,datasets:[
+    {label:'Portfolio',data:[20,24,21,26,22,28,22,25,20,23,19,26,24,30,27,32,28,26,24,22,21,23,20,21],borderColor:'#ff4d6a',borderWidth:2,pointRadius:0,fill:false,tension:0.4},
+    {label:'STI Benchmark',data:[13,14,13,16,14,17,13,15,12,14,13,16,15,18,16,19,17,15,14,13,12,13,12,12],borderColor:'rgba(79,127,255,0.6)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false,tension:0.4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{boxWidth:10,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'rgba(99,132,255,0.06)'},ticks:{callback:v=>v+'%',font:{size:9}}}}}});
+}
+
+// ── SCENARIOS ──
+const SCENARIOS={
+  tech:{
+    title:'Portfolio Impact — <span>US Tech Crash</span>',
+    sub:'Simulated drawdown path vs baseline trajectory',
+    chip:'−40% Shock',
+    sumTitle:'📉 US Tech Crash',
+    loss:'−S$154K',
+    sublabel:'18.3% drawdown · Recovery: ~16 months · Resilience: Moderate',
+    summaryClass:'',valClass:'',
+    shock:18.3, resilience:62, resFill:'var(--gold)',
+    impacts:[
+      {n:'US Equities & ETFs',v:'−S$94.5K',p:40,c:'#ff4d6a'},
+      {n:'SG REITs',v:'−S$18.2K',p:15,c:'#ff8866'},
+      {n:'Crypto',v:'−S$9.8K',p:20,c:'#ff4d6a'},
+      {n:'SG Property',v:'−S$8.4K',p:5,c:'#ffa500'},
+      {n:'CPF / Bonds',v:'+S$0',p:0,c:'#4a5878'}
+    ],
+    actions:[
+      ['🛡️','Trim US Tech to 20% of Liquid','Reduce QQQ + single-stock tech from 38% → 20%. Rotate into global diversified ETF (VT or IWDA).'],
+      ['🏢','Increase SG REIT Allocation','REITs provide income floor and lower tech correlation. Add S$20K to CICT or Mapletree PanAsia.'],
+      ['💵','Raise Cash Buffer to 6 Months','Move S$28K to money market fund. Prevents forced selling during drawdown.']
+    ]
+  },
+  rate:{
+    title:'Portfolio Impact — <span>Rate Hike +200bps</span>',
+    sub:'Fed / MAS rate shock · Duration and property impact',
+    chip:'+200bps Shock',
+    sumTitle:'📈 Rate Hike Scenario',
+    loss:'−S$89K',
+    sublabel:'10.6% drawdown · Recovery: ~11 months · Resilience: Moderate-Good',
+    summaryClass:'',valClass:'',
+    shock:10.6, resilience:71, resFill:'var(--gold)',
+    impacts:[
+      {n:'SG REITs (duration hit)',v:'−S$26.2K',p:22,c:'#ff4d6a'},
+      {n:'US Equities',v:'−S$35.4K',p:15,c:'#ff8866'},
+      {n:'SG Bonds / SSB',v:'−S$6.7K',p:8,c:'#ffa500'},
+      {n:'Fixed Deposits',v:'+S$4.8K',p:6,c:'#00e5a0'},
+      {n:'SG Property',v:'−S$25.5K',p:15,c:'#ff4d6a'}
+    ],
+    actions:[
+      ['📈','Lock In T-Bill Rates Now','MAS 6-month T-bills at 3.74%. Ladder S$40K in 3-month and 6-month bills before rates stabilise.'],
+      ['⚖️','Reduce Long-Duration Bond Exposure','SSB duration ~7Y is rate-sensitive. Consider short-duration IG bonds or floating-rate instruments.'],
+      ['🏠','Defer Property Upgrade Plans','Rate hike extends mortgage costs. Model impact on Tanjong Pagar condo before committing.']
+    ]
+  },
+  crypto:{
+    title:'Portfolio Impact — <span>Crypto Drawdown</span>',
+    sub:'−60% crypto bear cycle · Limited contagion to core portfolio',
+    chip:'−60% Shock',
+    sumTitle:'₿ Crypto Drawdown',
+    loss:'−S$29.5K',
+    sublabel:'3.5% drawdown · Recovery: ~7 months · Resilience: Good',
+    summaryClass:'',valClass:'',
+    shock:3.5, resilience:82, resFill:'var(--green)',
+    impacts:[
+      {n:'BTC Position',v:'−S$16.8K',p:60,c:'#ff4d6a'},
+      {n:'ETH Position',v:'−S$9.6K',p:60,c:'#ff4d6a'},
+      {n:'SOL / Alt Coins',v:'−S$3.1K',p:60,c:'#ff4d6a'},
+      {n:'US Equities',v:'−S$2.4K',p:1,c:'#ffa500'},
+      {n:'REITs / CPF / FI',v:'+S$0',p:0,c:'#4a5878'}
+    ],
+    actions:[
+      ['✂️','Cap Total Crypto at 5%','Trim to BTC-only at 5% of liquid assets (~S$22K). Removes high-beta alt-coin drag.'],
+      ['🔒','Redeploy to T-Bills or SSB','Proceeds from crypto trim → MAS T-bills at 3.74% yield. Improves income floor.'],
+      ['🧱','Review Exchange Counterparty Risk','Ensure crypto holdings are on regulated platforms (MAS-licensed). Cold wallet for holdings >S$20K.']
+    ]
+  },
+  income:{
+    title:'Portfolio Impact — <span>Income Shock</span>',
+    sub:'Simulated 6-month job loss · Liquidity and goal impact',
+    chip:'6-Mo Shock',
+    sumTitle:'💼 Income Shock — Job Loss (6 Months)',
+    loss:'−S$36K',
+    sublabel:'4.3% net worth impact · Liquidity buffer fully depleted · Goal delay: ~8 months',
+    summaryClass:'income',valClass:'income',
+    shock:4.3, resilience:48, resFill:'var(--red)',
+    impacts:[
+      {n:'Emergency Liquidity Buffer',v:'Depleted',p:100,c:'#ff4d6a'},
+      {n:'SRS / CPF (untouched)',v:'+S$0',p:0,c:'#4a5878'},
+      {n:'Investment Portfolio',v:'−S$36K',p:4,c:'#ffa500'},
+      {n:'Property Equity',v:'−S$0',p:0,c:'#4a5878'},
+      {n:'Home Upgrade Goal',v:'−8 months',p:30,c:'#ff8866'}
+    ],
+    actions:[
+      ['🚨','Raise Emergency Fund to 6 Months Now','Current 3.8-month buffer would be fully exhausted in this scenario. Target S$156K liquid before any investment top-up.'],
+      ['🛡️','Review Income Protection Insurance','An income-replacement policy (ManuProtect / AIA) covering 70% of income for 12 months significantly reduces this risk.'],
+      ['📅','Stress-Test Your Goal Timeline','Home upgrade goal delayed ~8 months in this scenario. Consider a S$15K CPF-OA buffer to preserve housing plans.']
+    ]
+  }
+};
+
+function buildScene(key){
+  const s=SCENARIOS[key];
+  document.getElementById('scene-title').innerHTML=s.title;
+  document.getElementById('scene-sub').textContent=s.sub;
+  document.getElementById('scene-chip').textContent=s.chip;
+  document.getElementById('scene-sum-title').textContent=s.sumTitle;
+  document.getElementById('scene-loss').textContent=s.loss;
+  document.getElementById('scene-sublabel').textContent=s.sublabel;
+
+  // Summary box classes
+  const sb=document.getElementById('scenario-summary-box');
+  sb.className='scenario-summary-box'+(s.summaryClass?' '+s.summaryClass:'');
+  document.getElementById('scene-sum-title').className='scenario-summary-title'+(s.summaryClass?' '+s.summaryClass:'');
+  document.getElementById('scene-loss').className='scenario-summary-val'+(s.valClass?' '+s.valClass:'');
+
+  // Resilience bar
+  document.getElementById('res-fill-bar').style.width=s.resilience+'%';
+  document.getElementById('res-fill-bar').style.background=s.resFill;
+  document.getElementById('res-pct-val').textContent=s.resilience+'%';
+  document.getElementById('res-pct-val').style.color=s.resFill;
+
+  // Impact rows
+  const ir=document.getElementById('impact-rows');ir.innerHTML='';
+  s.impacts.forEach(imp=>{
+    const pos=imp.v.startsWith('+');
+    const fc=pos?'#00e5a0':imp.c;
+    const vc=pos?'var(--green)':imp.p===0&&!pos?'var(--text3)':'var(--red)';
+    ir.innerHTML+=`<div class="impact-row"><div class="impact-name">${imp.n}</div><div class="impact-bar-wrap"><div class="impact-fill" style="width:${Math.max(imp.p,2)}%;background:${fc};opacity:${imp.p===0?0.15:0.85}"></div></div><div class="impact-val" style="color:${vc}">${imp.v}</div></div>`;
+  });
+
+  // Actions
+  const pa=document.getElementById('protective-actions');pa.innerHTML='';
+  s.actions.forEach(([icon,title,body])=>{
+    pa.innerHTML+=`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--card2);border-radius:8px;border:1px solid var(--border);"><div style="font-size:15px;flex-shrink:0;">${icon}</div><div><div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:2px;font-family:'Syne',sans-serif;">${title}</div><div style="font-size:10px;color:var(--text3);line-height:1.45;">${body}</div></div></div>`;
+  });
+
+  // Chart
+  if(sceneChartInst){sceneChartInst.destroy();sceneChartInst=null;}
+  const labels=Array.from({length:24},(_,i)=>'M'+(i+1));
+  const shock=s.shock;
+  const base=842;
+  const stressed=[base];
+  for(let i=1;i<=6;i++)stressed.push(base*(1-(shock/100)*(i/6)));
+  const trough=base*(1-shock/100);
+  for(let i=7;i<24;i++){const t=(i-6)/16;stressed.push(trough+(base*1.05-trough)*Math.min(1,t*1.2));}
+  const trend=labels.map((_,i)=>base+i*3.2);
+  const ctx=document.getElementById('scenarioChart').getContext('2d');
+  const gc=ctx.createLinearGradient(0,0,0,205);
+  gc.addColorStop(0,'rgba(255,77,106,0.18)');gc.addColorStop(1,'rgba(255,77,106,0)');
+  sceneChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
+    {label:'Stressed Portfolio',data:stressed,borderColor:'#ff4d6a',borderWidth:2,pointRadius:0,fill:true,backgroundColor:gc,tension:0.4},
+    {label:'Baseline Path',data:trend,borderColor:'rgba(79,127,255,0.4)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false,tension:0.3}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',align:'end',labels:{boxWidth:10,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:8,font:{size:9}}},y:{grid:{color:'rgba(99,132,255,0.06)'},ticks:{callback:v=>'S$'+Math.round(v)+'K',font:{size:9}}}}}});
+}
+
+function switchScenario(key){
+  document.querySelectorAll('.scenario-tab').forEach(t=>t.classList.remove('active'));
+  const tab=document.getElementById('tab-'+key);
+  tab.classList.add('active');
+  if(key==='income')tab.classList.add('income');
+  if(sceneChartInst){sceneChartInst.destroy();sceneChartInst=null;}
+  buildScene(key);
+  const slv={tech:'−40%',rate:'+200bps',crypto:'−60%',income:'6 Months'};
+  const slr={tech:40,rate:20,crypto:60,income:30};
+  document.getElementById('shock-slider').value=slr[key];
+  document.getElementById('slider-val').textContent=slv[key];
+  // Update summary cards
+  const summaryMap={tech:['US Tech Crash','−S$154K','18.3% drawdown · 16mo recovery'],rate:['Rate Hike +200bps','−S$89K','10.6% drawdown · 11mo recovery'],crypto:['Crypto Drawdown','−S$29.5K','3.5% drawdown · 7mo recovery'],income:['Income Shock','−S$36K + liquidity depleted','4.3% net worth · goal delay +8mo']};
+  const sm=summaryMap[key];
+  document.querySelector('.grid-4 .card:nth-child(1) .card-value').textContent=sm[0];
+  document.querySelector('.grid-4 .card:nth-child(2) .card-value').textContent=sm[1];
+}
+
+function updateSlider(v){
+  const key=document.querySelector('.scenario-tab.active').id.replace('tab-','');
+  document.getElementById('slider-val').textContent=key==='rate'?'+'+v+'bps':key==='income'?v+' Months':'−'+v+'%';
+}
+
+// ── CHAT ──
+const RESPONSES={
+  'how can i improve my resilience?':`Your Shock Resilience of <span class="msg-highlight">62</span> is the main drag on your overall score. Three targeted moves would lift it to ~82:<br><br>
+<strong style="color:var(--gold2)">1. Raise liquidity buffer</strong> — Move S$28K to a money market fund. Gets you to 5.8 months. This is your single highest-impact action.<br><br>
+<strong style="color:var(--blue2)">2. Trim US tech concentration</strong> — Reduce QQQ + AAPL from 38% → 22% of liquid portfolio. Rotate into <span class="msg-highlight">Vanguard Total World (VT)</span>.<br><br>
+<strong style="color:var(--green)">3. Add income-generating assets</strong> — S$20K into SG REITs (CICT) generates ~S$1,100/yr yield and shortens drawdown recovery time.<br><br>
+Total reallocation: ~S$76K. Health Score impact: <span class="msg-highlight">81 → 91</span>.`,
+
+  'should i rebalance my portfolio?':`Yes — your portfolio has drifted from target allocation. Here's the rebalancing prescription:<br><br>
+<strong style="color:var(--red)">Trim:</strong><br>
+· US Equities from 28% → 20% (sell ~S$67K of QQQ/tech)<br>
+· Crypto from 6% → 4% (sell ~S$17K, rotate to T-bills)<br><br>
+<strong style="color:var(--green)">Add:</strong><br>
+· Global ETFs: +S$40K (VT or IWDA — broadens geographic exposure)<br>
+· SG REITs: +S$20K (income floor, lower USD dependency)<br>
+· Cash/MMF: +S$24K (closes liquidity gap to 6 months)<br><br>
+Post-rebalance, currency risk drops from 68% USD to ~52% USD, and Resilience score lifts from <span class="msg-highlight">62 → 80</span>.`,
+
+  'how exposed am i to a tech selloff?':`Significantly exposed. Here's the breakdown:<br><br>
+Your US tech holdings (QQQ, AAPL, NVDA via VTI tilt) represent <span class="msg-highlight">38% of liquid investable assets</span>.<br><br>
+In a 40% tech drawdown (similar to 2022), Aura models a loss of approximately <strong style="color:var(--red)">S$94,500</strong> — roughly 11% of total net worth.<br><br>
+Your CPF, SG property, and fixed income act as natural buffers (~52% of net worth). But the recovery timeline stretches to ~16 months due to limited income-generating assets.<br><br>
+<strong style="color:var(--gold2)">Recommended threshold:</strong> Keep tech-heavy exposure below 22% of liquid assets for your risk tier. Run the Scenario Simulator to see the full drawdown path.`,
+
+  'am i on track for retirement?':`Based on your current trajectory, you're <span class="msg-highlight">ahead of schedule</span> on wealth accumulation but moderately exposed on income security.<br><br>
+📊 <strong style="color:var(--text)">Retirement readiness snapshot:</strong><br>
+· Current net worth: S$842K · Target at 65: S$2.4M<br>
+· Required CAGR: ~8.2% · Your 3Y actual: 13.4% ✅<br>
+· CPF SA balance: S$82K · FRS target at 55: S$205K (needs top-up)<br>
+· SRS utilisation: 78% of annual cap ⚠️<br><br>
+<strong style="color:var(--gold2)">Two gaps to close:</strong><br>
+1. CPF SA top-up of S$15K/yr to hit FRS target by 55.<br>
+2. Maximise SRS (remaining S$3,400 this year) — saves ~S$1,050 in income tax.`,
+
+  'how should i optimise my srs contributions?':`Great timing to ask — you have <span class="msg-highlight">S$3,400 remaining</span> before the annual S$15,300 SRS cap.<br><br>
+<strong style="color:var(--gold2)">Why top it up now:</strong><br>
+· At your income bracket, each S$1 into SRS saves ~S$0.22 in income tax<br>
+· S$3,400 top-up = ~S$748 tax saving this year<br>
+· Investment within SRS compounds tax-deferred until withdrawal at 62<br><br>
+<strong style="color:var(--blue2)">What to invest it in (within SRS):</strong><br>
+· <span class="msg-highlight">40%</span> — ABF SG Bond Index ETF (defensive, SGD-denominated)<br>
+· <span class="msg-highlight">60%</span> — Nikko AM STI ETF (low-cost SG equity exposure)<br><br>
+This SRS-optimised mix balances growth and tax efficiency. Aura can model the 20-year compounding impact if helpful.`
+};
+
+function sendMessage(txt){document.getElementById('chat-input').value=txt;sendChatMessage();}
+function handleKey(e){if(e.key==='Enter')sendChatMessage();}
+function sendChatMessage(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();if(!txt)return;inp.value='';
+  const c=document.getElementById('chat-messages');
+  c.innerHTML+=`<div class="msg user"><div class="msg-avatar user">SB</div><div class="msg-bubble">${txt}</div></div>`;
+  const tid='t'+Date.now();
+  c.innerHTML+=`<div class="msg ai" id="${tid}"><div class="msg-avatar ai">✦</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+  c.scrollTop=c.scrollHeight;
+  const key=txt.toLowerCase().replace(/[^a-z0-9 ?]/g,'').trim();
+  const resp=RESPONSES[key]||`I'm analysing "<em>${txt}</em>" across your full wealth profile.<br><br>Based on your S$842K portfolio, I'll cross-reference this against your financial health pillars — liquidity, concentration, goal alignment, and resilience. Give me a moment to generate a prioritised recommendation. <span class="msg-highlight">QuantForge Intelligence Engine</span> is running your multi-asset model now.`;
+  setTimeout(()=>{const el=document.getElementById(tid);if(el)el.remove();c.innerHTML+=`<div class="msg ai"><div class="msg-avatar ai">✦</div><div class="msg-bubble">${resp}</div></div>`;c.scrollTop=c.scrollHeight;},1500);
+}
+
+window.addEventListener('DOMContentLoaded',initDash);
+</script>
+</body>
+</html>
